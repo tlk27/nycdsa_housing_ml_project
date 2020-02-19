@@ -1,0 +1,208 @@
+---
+title: "prelim_eda"
+author: "jwattier"
+date: "2/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(bbplot)
+
+options(scipen = 999)
+
+homes <- readr::read_csv('./data/train.csv')
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+library(ggthemr)
+ggthemr("fresh")
+homes %>% ggplot(., mapping = aes(x = SalePrice)) + 
+  geom_histogram()
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r kitchens, echo=FALSE}
+homes %>% ggplot(., mapping = aes(x = KitchenQual))+
+  geom_bar()
+```
+
+```{r mean Sales Price by Kitchen, echo=FALSE}
+homes %>% group_by(KitchenQual) %>% 
+  summarise(., avg_price = mean(SalePrice)) %>% 
+  ggplot(., mapping = aes(x = KitchenQual, y = avg_price)) +
+  geom_col()
+
+# could have encoding og good/excellent kitchen (perhaps separate) and then combine Fa/TA)  
+
+```
+```{r one-way ANOVA test}
+summary(aov(homes$SalePrice ~ homes$KitchenQual))
+homes %>% count(KitchenQual)
+
+homes %>% ggplot(., mapping = aes(x=KitchenQual, y=SalePrice)) +
+                   geom_boxplot(aes(x = reorder(KitchenQual, SalePrice, median), fill=KitchenQual))
+```
+
+
+
+
+
+
+
+```{r neighborhood by Sales Price }
+
+homes %>% 
+  ggplot(., mapping = aes(x = reorder(Neighborhood, SalePrice, median), y = SalePrice)) +
+  geom_boxplot()
+# top 3 (NoRidge, NridgHt, StoneBr seem to definitely be a touch above others, through about 
+# middle of pack seems to be another set, then from there to  bottom are somewhat close
+#....bottom three perhaps should have a separate grouping too )
+
+```
+```{r avg sqft by Sales Price}
+homes %>% mutate(., sqft_per_room = (GrLivArea/TotRmsAbvGrd)) %>% 
+  ggplot(., mapping = aes(x = sqft_per_room, y = SalePrice)) +
+  geom_point()
+
+# appears to be roughly linear -> curious about log transfomation 
+
+homes_2 <- mutate(homes, sqft_per_room = (GrLivArea/TotRmsAbvGrd)) 
+stats::cor(homes_2$sqft_per_room, homes_2$SalePrice)
+```
+
+```{r}
+summary(homes[, c("MiscFeature", "MiscVal", "SalePrice")])
+
+unique(homes$MiscFeature)
+
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x = MiscFeature, y = SalePrice))
+
+summary(aov(homes$SalePrice ~ homes$MiscFeature))
+
+homes %>% filter(., !is.na(MiscFeature)) %>% count(MiscFeature)
+```
+
+```{r}
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=SaleCondition, y=SalePrice, fill=SaleCondition))
+
+summary(aov(homes$SalePrice ~ homes$SaleCondition))
+
+homes %>% count(SaleCondition)
+```
+
+
+```{r Month Sold vs Avg Sale Price}
+homes %>% group_by(MoSold) %>% 
+  summarise(., avg_price = mean(SalePrice)) %>% 
+  ggplot(., mapping = aes(x = MoSold, y = avg_price)) +
+  # ylim(150000, 200000)
+  geom_col()
+```
+
+
+```{r}
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=PoolQC, y=SalePrice))
+
+summary(aov(homes$SalePrice ~ homes$PoolQC))
+
+homes %>% count(PoolQC)
+```
+
+
+
+```{r Overall Quality vs Avg Sale Price}
+homes %>% group_by(OverallQual) %>% 
+  summarise(., avg_price = mean(SalePrice)) %>%
+  ggplot(., mapping = aes(x = OverallQual, y = avg_price))+
+  geom_col()
+
+homes %>% group_by(OverallQual) %>% 
+  count()
+```
+
+
+```{r Overall Cond vs Avg Sale Price}
+homes %>% group_by(OverallCond) %>% 
+  summarise(., med_price = median(SalePrice)) %>%
+  ggplot(., mapping = aes(x = OverallCond, y = med_price))+
+  geom_col()
+
+homes %>% group_by(OverallCond) %>% 
+  count()
+```
+
+```{r}
+homes %>% ggplot(., mapping = aes(x=OverallQual, y=OverallCond)) +
+  geom_jitter()
+```
+
+
+```{r}
+homes %>% group_by(CentralAir) %>% 
+  summarise(., med_price = median(SalePrice)) %>% 
+  ggplot(., mapping= aes(x=CentralAir, y=med_price)) +
+  geom_col()
+
+homes %>% count(CentralAir)
+```
+
+
+```{r}
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=Functional, y=SalePrice))
+```
+
+```{r}
+homes %>% ggplot() +
+  geom_jitter(mapping = aes(x=TotRmsAbvGrd, y=SalePrice))
+
+stats::cor(x=homes$TotRmsAbvGrd, y=homes$SalePrice)
+```
+
+
+```{r}
+homes %>% arrange(., desc(SalePrice)) %>% head(10)
+```
+```{r}
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=Street, y=SalePrice))
+```
+```{r}
+homes %>% group_by(YearBuilt) %>% 
+  summarise(., avg_price = mean(SalePrice)) %>% 
+  ggplot() +
+  geom_point(mapping = aes(x=YearBuilt, y=avg_price))
+
+# overall seems to stay in the same general range until post 1980
+# homes tend to sell for more with an upward trend
+```
+```{r}
+homes %>% group_by(YearRemodAdd) %>% 
+  summarise(., log_avg_price = log(mean(SalePrice))) %>% 
+  ggplot() +
+  geom_point(mapping = aes(x=YearRemodAdd, y=log_avg_price))
+```
+
+```{r}
+stats::cor(x = homes$YearRemodAdd, y = log(homes$SalePrice))
+```
+
