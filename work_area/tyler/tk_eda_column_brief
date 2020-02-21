@@ -1,0 +1,28 @@
+Id                int64
+MSSubClass        int64 CAT
+MSZoning         object CAT
+LotFrontage     float64 NUM
+LotArea           int64 NUM
+Street           object CAT - BINARY
+Alley            object CAT - BINARY 
+LotShape         object CAT -- MAYBE MAKE BINARY; regular irregular?
+LandContour      object CAT -- binary - or dummify
+Utilities        object CAT -- exclude
+LotConfig        object CAT -- maybe
+LandSlope        object CAT -- maybe drop -- collinearity with LandContour?
+Neighborhood     object CAT -- dummify; maybe lasso would be beneficial here
+Condition1       object CAT -- collinearity with CONDITION 1? can we combine?
+Condition2       object CAT -- potentially drop - collinearity with CONDITION 1? can we combine?
+BldgType         object CAT -- thinking dummify into a binary single or non single detached
+HouseStyle       object CAT -- dummify
+OverallQual       int64 ORD -- KEEP
+OverallCond       int64 ORD -- KEEP
+YearBuilt         int64 DISC -- bucket?
+YearRemodAdd      int64 DISC -- potential collinearity with YearBuilt; maybe binary
+RoofStyle        object CAT -- binary
+RoofMatl         object	CAT -- binary
+Exterior1st      object CAT -- dummify - maybe lasso could help with this also
+Exterior2nd      object CAT -- drop?
+MasVnrType       object CAT - maybe
+MasVnrArea      float64 NUM - maybe
+SalePrice         int64 NUM
