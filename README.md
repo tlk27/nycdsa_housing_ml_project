@@ -15,7 +15,7 @@ The folder structure of the project is broken down into the following sections:
 - **model_files**: Persisted, pre-trained model files utilized to make predictions from the unseen data in the test.csv file. For example, lr_log_model.joblib is the persisted linear regression model of the log-transformed home sale price derived from the "linear_model.ipynb/.py" files. 
 - **pre_processeded_data**: Output files from pre-processing of raw data files from the pre_process.ipynb/.py files.
 - **predictions**: Predicted house prices values from modles in 
-- **work_area**: Represents 
+- **work_area**: Represents experimentation area of individual team members prior to consilidation of thoughts and focus in the main repo section.
 
 ## Order of Evaluation
 
