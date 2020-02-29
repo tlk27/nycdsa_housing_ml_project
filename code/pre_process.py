@@ -20,7 +20,7 @@ import pandas as pd
 # %pylab inline
 
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 file_path = r"..\data\train.csv"
 
 # column list to import from train csv file based upon initial
@@ -35,14 +35,14 @@ import_list = ['Id', 'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Alley'
               'SaleType', 'SaleCondition','Electrical',"HeatingQC","Fireplaces", "FireplaceQu", "BsmtQual", "BsmtFinType1", 
               "BsmtFinType2", 'LotFrontage', 'LotArea', 'GarageCars', 'OverallCond', 'SalePrice'] 
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # Index will be the ID of the house sale
 initial_df = pd.read_csv(filepath_or_buffer=file_path, usecols=import_list, index_col=0)
 
 # convert column names to lowercase and replace spaces with underscores
 cleaned_df = jn.clean_names(initial_df)
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 cleaned_df.sample(5)
 
  # remove outliers based on Pre_process draft based upon Cook's distance > 3 times 
@@ -50,19 +50,26 @@ cleaned_df.sample(5)
 # this step is performed prior to imputation steps  
 cleaned_df = cleaned_df.drop([1299, 524], axis="rows") 
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
+# adjust basement sqft to cap effect of outliers that I have high basement sf but that do not appear to be 
+# reflected in an increase in price 
+cleaned_df["totalbsmtsf"] = cleaned_df["totalbsmtsf"].apply(lambda x: 3000 if x > 3000 else x)
+
 # Combined square footage metrics for building sf and outside sf (e.g., porch space)
 bldg_sqft = cleaned_df[["totalbsmtsf", "1stflrsf", "2ndflrsf"]].sum(axis = "columns")
 outside_sf = cleaned_df[["wooddecksf", "openporchsf", "3ssnporch", "screenporch", "enclosedporch"]].sum(axis="columns")
 lot_sf = cleaned_df["lotarea"] - cleaned_df['1stflrsf'] - outside_sf
+lot_sf = lot_sf.apply(lambda x: 12500 if x > 12500 else x)
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# limit lot_sf to maximum of 25,000 sqft, feature does not appear to be valued above this mark.
+
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # Combining above-basement and basement baths
 total_baths = cleaned_df["fullbath"]  + cleaned_df["halfbath"]/ 2 + cleaned_df["bsmtfullbath"] \
                    + cleaned_df["bsmthalfbath"] / 2
 
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # Various Dummifications
 # 0=1 flat if the building type is a single family home
 sgl_famly_hm = cleaned_df["bldgtype"].apply(lambda x: 0 if x == '1Fam' else 1)
@@ -80,10 +87,11 @@ good_frplc = cleaned_df["fireplacequ"].isin(["Ex", "Gd", "TA"]).map({False: 0, T
 # new_home = sold within past 5 years 
 homeage = cleaned_df["yrsold"] - cleaned_df["yearbuilt"]
 remodelage = cleaned_df["yrsold"] - cleaned_df["yearremodadd"]
-newHome = homeage < 5
+remodelage = remodelage.apply(lambda x: 0 if abs(x) < 5 else x - 5)
+newHome = abs(homeage) < 5 # added to address minor instances where yr sold was earlier than year built/remodeled
 newHome = newHome.map({False: 0, True: 1})
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # Various measures where higher amenity ratings that were associated with higher home prices
 # these are being combined into a single "positive amentities count" feature 
 
@@ -107,7 +115,7 @@ excl_bsmt.sum()
 
 good_ament_ct = pd.concat([excl_heating, excl_bsmt, ktch_dummies, bsmt_gd_lvg, good_frplc], axis = "columns").sum(axis="columns")
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # Various measures where lower amenity ratings were associated with lower higher prices (versus the average/highly rated) 
 # these are being combined into a single "negative amentities count" feature
 
@@ -124,7 +132,7 @@ bad_electrical = cleaned_df['electrical'].isin(['Mix', 'FuseP', 'FuseF', 'FuseA'
 bad_ament_ct = pd.concat([no_central_ac, no_fireplace, bad_electrical], axis="columns").sum(axis="columns")
 
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # remaining features
 
 #1 credit for having garage space for two or more cars
@@ -143,7 +151,7 @@ abnormal_sale = (cleaned_df["salecondition"] == "Abnorml").map({False: 0, True: 
 
 adj_ovr_qual = cleaned_df["overallqual"].apply(lambda x: 0 if x <=3 else x - 3)
 
-# + pycharm={"name": "#%% \n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%% \n"}
 # specifying the target and explanatory variables 
 list_of_features = [
     bldg_sqft, total_baths, good_ament_ct, btm_5_nbrhd, newHome, neg_ovrll_cond, adj_ovr_qual, adj_lot_area,
@@ -162,7 +170,7 @@ features_pls_trgt.columns = [
 
 features_pls_trgt.sample(5)
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 # creating field that is the log of sale price
 features_pls_trgt["log_saleprice"] = np.log(features_pls_trgt["saleprice"])
 
@@ -171,7 +179,7 @@ file_path_pre_process = r"..\pre_processed_data\pre_processed.csv"
 # output X and y to pre_processed CSV file (non-standardized)
 features_pls_trgt.to_csv(file_path_pre_process)
 
-# + pycharm={"name": "#%%\n", "is_executing": false}
+# + pycharm={"is_executing": false, "name": "#%%\n"}
 print(features_pls_trgt.shape)
 
 features_pls_trgt.columns
