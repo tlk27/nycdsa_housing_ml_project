@@ -41,7 +41,7 @@ The folder structure of the project is broken down into the following sections:
 
 - As an example, the linear regression model trained and evaluated in the *linear_model* files outputs the resulting model to the *lr_log_model.joblib* file in the *model_files* folder.
 
-4. **code/predition files**
+4. **code/prediction files**
 
 - Pre-processing measures developed in step 2 of the evaluation process are applied to the house sale sample data in the *data/test.csv* file for purposes of making predictions on this data utilizing the pre-trained models from step 3 and uploading to Kaggle for model evaluation.
 
