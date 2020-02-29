@@ -73,6 +73,7 @@ homes %>%
 # top 3 (NoRidge, NridgHt, StoneBr seem to definitely be a touch above others, through about 
 # middle of pack seems to be another set, then from there to  bottom are somewhat close
 #....bottom three perhaps should have a separate grouping too )
+homes %>% count(Neighborhood) %>% arrange(., desc(n))
 
 ```
 ```{r avg sqft by Sales Price}
@@ -135,8 +136,16 @@ homes %>% group_by(OverallQual) %>%
   ggplot(., mapping = aes(x = OverallQual, y = avg_price))+
   geom_col()
 
+
+# homes$OverallQual <- as.factor(homes$OverallQual)
+
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x = reorder(OverallQual, SalePrice, median), y = SalePrice))
+
 homes %>% group_by(OverallQual) %>% 
   count()
+
+summary(aov(homes$SalePrice ~ homes$OverallQual))
 ```
 
 
@@ -204,5 +213,188 @@ homes %>% group_by(YearRemodAdd) %>%
 
 ```{r}
 stats::cor(x = homes$YearRemodAdd, y = log(homes$SalePrice))
+stats::cor(x = homes$YearBuilt, y = log(homes$SalePrice))
+```
+
+```{r}
+stats::cor(x = homes$YearRemodAdd, y = homes$SalePrice)
+stats::cor(x = homes$YearBuilt, y = homes$SalePrice)
+homes %>% group_by(YearRemodAdd) %>% 
+  summarise(., avg_price = mean(SalePrice)) %>% 
+  ggplot() +
+  geom_point(mapping = aes(x=YearRemodAdd, y=avg_price)) +
+  ggtitle("YearRemodAdd")
+```
+
+```{r}
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=Fence, y=SalePrice, color=Fence))+
+  ggtitle("Fence Quality versus SalePrice")
+
+summary(aov(homes$SalePrice ~ homes$Fence))
+
+homes %>% count(PoolQC)
+```
+
+```{r}
+#col_to_check = "SaleType"
+homes %>% ggplot() +
+  geom_boxplot(mapping = aes(x=SaleType, y=SalePrice))+
+  ggtitle("SaleType versus SalePrice")
+
+summary(aov(homes$SalePrice ~ homes$SaleType))
+
+homes %>% count(SaleType)
+```
+
+```{r}
+# looking at total deck and/or porch sf
+# homes_deck_sf <- 
+homes_deck_sf <- homes %>%  mutate(., total_dk_prch_sf = WoodDeckSF + OpenPorchSF + EnclosedPorch + `3SsnPorch` + ScreenPorch)
+  
+homes_deck_sf %>% ggplot() +
+  geom_histogram(mapping = aes(x = total_dk_prch_sf))
+
+
+homes_deck_sf %>% ggplot() +
+  geom_point(mapping = aes(x=total_dk_prch_sf, y=SalePrice))
+
+stats::cor(homes_deck_sf$SalePrice, homes_deck_sf$total_dk_prch_sf)
+
+```
+
+```{r}
+homes_deck_sf <- homes %>%  mutate(., total_dk_prch_sf = WoodDeckSF + OpenPorchSF + EnclosedPorch + `3SsnPorch` + ScreenPorch)
+  
+homes_deck_sf %>% filter(., total_dk_prch_sf > 0) %>%  ggplot() +
+  geom_histogram(mapping = aes(x = total_dk_prch_sf))
+
+
+homes_deck_sf %>% filter(., total_dk_prch_sf > 0) %>% ggplot() + 
+  geom_point(mapping = aes(x=total_dk_prch_sf, y=SalePrice))
+
+home_deck_sf_filtered <- homes_deck_sf %>% filter(., total_dk_prch_sf > 0)
+
+stats::cor(home_deck_sf_filtered$SalePrice,home_deck_sf_filtered$total_dk_prch_sf)
+```
+
+```{r}
+homes %>% ggplot() +
+  geom_histogram(mapping = aes(x = TotRmsAbvGrd))
+
+
+homes_deck_sf %>% ggplot() +
+  geom_point(mapping = aes(x=TotRmsAbvGrd, y=SalePrice))
+
+stats::cor(homes_deck_sf$SalePrice, homes_deck_sf$TotRmsAbvGrd)
+```
+
+```{r}
+#homes %>% ggplot() +
+#  geom_histogram(mapping = aes(x = Fireplaces))
+
+#homes %>% filter(., Fireplaces > 0) %>% ggplot() + 
+#  geom_point(mapping = aes(x=Fireplaces, y=SalePrice))
+
+# homes$Fireplaces <- as.factor(homes$Fireplaces)
+
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=Fireplaces, y=SalePrice))
+
+home_filtered <- homes %>% filter(., Fireplaces > 0)
+
+summary(aov(homes$SalePrice ~ homes$Fireplaces))
+
+homes %>% count(Fireplaces)
+```
+
+```{r}
+
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=reorder(FireplaceQu, SalePrice, median), y=SalePrice))
+
+
+summary(aov(homes$SalePrice ~ homes$FireplaceQu))
+
+
+homes %>% count(FireplaceQu)
+```
+
+```{r}
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=reorder(GarageType, SalePrice, median), y=SalePrice))
+
+
+summary(aov(homes$SalePrice ~ homes$GarageType))
+
+
+homes %>% count(GarageType)
+```
+
+```{r}
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=reorder(GarageCond, SalePrice, median), y=SalePrice))
+
+
+summary(aov(homes$SalePrice ~ homes$GarageCond))
+
+
+homes %>% count(GarageCond)
+```
+
+```{r}
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=reorder(GarageFinish, SalePrice, median), y=SalePrice))
+
+
+summary(aov(homes$SalePrice ~ homes$GarageFinish))
+
+
+homes %>% count(GarageFinish)
+```
+
+
+```{r}
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=reorder(PavedDrive, SalePrice, median), y=SalePrice))
+
+
+summary(aov(homes$SalePrice ~ homes$PavedDrive))
+
+
+homes %>% count(homes$PavedDrive)
+```
+
+```{r}
+homes %>% mutate(., home_age = YrSold - YearRemodAdd) %>% 
+  ggplot(.) +
+  geom_point(mapping = aes(x = home_age, y = SalePrice))
+
+homes <- homes %>% mutate(., home_age = YrSold - YearRemodAdd)
+# homes <- select(homes, -starts_with("home_age"))
+class(homes$home_age)
+
+
+stats::cor(x = homes$home_age, y = homes$SalePrice)
+```
+
+```{r}
+homes_filtered <- homes %>% filter(., home_age > 0) 
+
+
+stats::cor(x = homes_filtered$home_age, y = homes_filtered$SalePrice)
+
+```
+
+
+```{r}
+homes$MoSold <- as.factor(homes$MoSold)
+
+homes %>%  ggplot() + 
+  geom_boxplot(mapping = aes(x=MoSold, y=SalePrice))
+
+summary(aov(homes$SalePrice ~ homes$MoSold))
+
+homes %>% count(MoSold)
 ```
 
